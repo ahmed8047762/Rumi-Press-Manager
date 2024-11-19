@@ -1,0 +1,295 @@
+{% extends 'books/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Main content -->
+        <main class="col-md-12 ms-sm-auto col-lg-12 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    {% if selected_import %}
+                        Dashboard - {{ selected_import.filename }}
+                    {% else %}
+                        Dashboard - All Books
+                    {% endif %}
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="{% url 'books:import_books' %}" class="btn btn-sm btn-outline-primary">
+                        <span data-feather="upload"></span>
+                        Import Books
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Books</h5>
+                            <p class="card-text display-6">{{ total_books|intcomma }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Expense</h5>
+                            <p class="card-text display-6">${{ total_expense|floatformat:2|intcomma }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Categories</h5>
+                            <p class="card-text display-6">{{ category_stats|length|intcomma }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="row">
+                <!-- Daily Trend Chart -->
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Daily Expense & Book Count (Last 7 Days)</h5>
+                            <canvas id="dailyTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Trend Chart -->
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Monthly Overview (Last 6 Months)</h5>
+                            <canvas id="monthlyTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Trend Chart -->
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Category Expense Distribution Over Time</h5>
+                            <canvas id="categoryTrendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Distribution -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Category Distribution</h5>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Category</th>
+                                            <th>Books</th>
+                                            <th>Total Expense</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for stat in category_stats %}
+                                        <tr>
+                                            <td>{{ stat.name }}</td>
+                                            <td>{{ stat.book_count|intcomma }}</td>
+                                            <td>${{ stat.total_expense|floatformat:2|intcomma }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Daily Trend Chart
+    var dailyCtx = document.getElementById('dailyTrendChart').getContext('2d');
+    var dailyTrend = {{ daily_trend|safe }};
+    
+    new Chart(dailyCtx, {
+        type: 'bar',
+        data: {
+            labels: dailyTrend.map(item => item.date),
+            datasets: [{
+                label: 'Daily Expense',
+                data: dailyTrend.map(item => item.expense),
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgb(75, 192, 192)',
+                borderWidth: 1,
+                yAxisID: 'y'
+            }, {
+                label: 'Book Count',
+                data: dailyTrend.map(item => item.book_count),
+                type: 'line',
+                borderColor: 'rgb(255, 99, 132)',
+                tension: 0.1,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Expense ($)'
+                    },
+                    ticks: {
+                        callback: value => '$' + value.toLocaleString()
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Number of Books'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Monthly Trend Chart
+    var monthlyCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+    var monthlyTrend = {{ monthly_trend|safe }};
+    
+    new Chart(monthlyCtx, {
+        type: 'bar',
+        data: {
+            labels: monthlyTrend.map(item => item.month),
+            datasets: [{
+                label: 'Monthly Expense',
+                data: monthlyTrend.map(item => item.expense),
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgb(54, 162, 235)',
+                borderWidth: 1,
+                yAxisID: 'y'
+            }, {
+                label: 'Book Count',
+                data: monthlyTrend.map(item => item.book_count),
+                type: 'line',
+                borderColor: 'rgb(255, 159, 64)',
+                tension: 0.1,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Expense ($)'
+                    },
+                    ticks: {
+                        callback: value => '$' + value.toLocaleString()
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Number of Books'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Category Trend Chart
+    var categoryCtx = document.getElementById('categoryTrendChart').getContext('2d');
+    var categoryTrend = {{ category_trend|safe }};
+    var monthLabels = {{ monthly_trend|safe }}.map(item => item.month);
+    
+    new Chart(categoryCtx, {
+        type: 'line',
+        data: {
+            labels: monthLabels,
+            datasets: categoryTrend.map((category, index) => ({
+                label: category.category,
+                data: category.data,
+                borderColor: `hsl(${index * 360 / categoryTrend.length}, 70%, 50%)`,
+                tension: 0.1,
+                fill: false
+            }))
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Expense ($)'
+                    },
+                    ticks: {
+                        callback: value => '$' + value.toLocaleString()
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Category Expense Trends'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': $' + context.raw.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

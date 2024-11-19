@@ -1,0 +1,122 @@
+{% extends 'books/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Main content -->
+        <main class="col-md-12 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    {% if selected_import %}
+                        Books from {{ selected_import.filename }}
+                    {% else %}
+                        All Books
+                    {% endif %}
+                </h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <a href="{% url 'books:import_books' %}" class="btn btn-sm btn-outline-primary">
+                        <span data-feather="upload"></span>
+                        Import Books
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Books</h5>
+                            <p class="card-text display-6">{{ total_books|intcomma }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Expense</h5>
+                            <p class="card-text display-6">${{ total_expense|floatformat:2|intcomma }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Categories</h5>
+                            <p class="card-text display-6">{{ category_stats|length|intcomma }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Distribution -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Category Distribution</h5>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Category</th>
+                                            <th>Books</th>
+                                            <th>Total Expense</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for stat in category_stats %}
+                                        <tr>
+                                            <td>{{ stat.name }}</td>
+                                            <td>{{ stat.book_count|intcomma }}</td>
+                                            <td>${{ stat.total_expense|floatformat:2|intcomma }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Latest Books -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Latest Books</h5>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>ISBN</th>
+                                            <th>Title</th>
+                                            <th>Authors</th>
+                                            <th>Category</th>
+                                            <th>Expense</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for book in latest_books %}
+                                        <tr>
+                                            <td>{{ book.isbn }}</td>
+                                            <td>{{ book.title }}</td>
+                                            <td>{{ book.authors }}</td>
+                                            <td>{{ book.category.name }}</td>
+                                            <td>${{ book.distribution_expense|floatformat:2|intcomma }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

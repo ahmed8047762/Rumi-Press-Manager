@@ -1,0 +1,59 @@
+{% extends 'books/base.html' %}
+
+{% block title %}Import Books - Rumi Press{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title mb-0">Import Books from Excel</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="excel_file" class="form-label">Excel File</label>
+                        <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx,.xls" required>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Required Columns and Format:</h5>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Required Columns:</strong></p>
+                                <ul class="mb-3">
+                                    <li><code>id</code> - ISBN or unique identifier</li>
+                                    <li><code>title</code> - Book title</li>
+                                    <li><code>authors</code> - Author names</li>
+                                    <li><code>publisher</code> - Publisher name</li>
+                                    <li><code>published_date</code> - Publication date</li>
+                                    <li><code>category</code> - Book category</li>
+                                    <li><code>distribution_expense</code> - Cost as decimal number</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Optional Columns:</strong></p>
+                                <ul class="mb-3">
+                                    <li><code>subtitle</code> - Book subtitle</li>
+                                </ul>
+                                <p class="mb-2"><strong>Date Format Examples:</strong></p>
+                                <ul>
+                                    <li>MM/DD/YYYY (e.g., 12/31/2023)</li>
+                                    <li>DD/MM/YYYY (e.g., 31/12/2023)</li>
+                                    <li>YYYY-MM-DD (e.g., 2023-12-31)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Import Books</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
